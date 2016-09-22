@@ -51,6 +51,9 @@ class LEDController(Thread):
         if cmd not in self.commands:
             raise ValueError(
                     'Invalid command, supported commands are: {}'.format(self.commands))
+        if name not in self.led_context:
+            raise AttributeError(
+                    'LED is not initialized.')
 
         self.led_context[name]['cmd'] = cmd
 
