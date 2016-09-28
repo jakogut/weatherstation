@@ -116,6 +116,9 @@ class PWS(object):
 
     @property
     def tempc(self):
+        if not self._tempc:
+            return None
+
         return self._tempc
 
     @tempc.setter
@@ -124,6 +127,9 @@ class PWS(object):
 
     @property
     def tempf(self):
+        if not self._tempc:
+            return None
+
         Q_ = self.ureg.Quantity
         quantity, unit = Q_(self._tempc, self.ureg.degC).to('degF').to_tuple()
         return quantity
@@ -136,6 +142,9 @@ class PWS(object):
 
     @property
     def barom_kPa(self):
+        if not self._kPa:
+            return None
+
         return self._kPa
 
     @barom_kPa.setter
@@ -144,6 +153,9 @@ class PWS(object):
 
     @property
     def barom_inHg(self):
+        if not self._kPa:
+            return None
+
         quantity, unit = (self._kPa * self.ureg.kPa).to(self.ureg.inHg).to_tuple()
         return quantity
 
@@ -153,6 +165,9 @@ class PWS(object):
 
     @property
     def humidity_pct(self):
+        if not self._humd_pct:
+            return None
+
         return self._humd_pct
 
     @humidity_pct.setter
@@ -161,6 +176,9 @@ class PWS(object):
 
     @property
     def uv(self):
+        if not self._uv:
+            return None
+
         return self._uv
 
     @uv.setter
