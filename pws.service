@@ -1,0 +1,9 @@
+[Unit]
+Description=Personal Weather Station
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python -m weatherstation.pws /etc/weatherstation.cfg
+
+[Install]
+WantedBy=multi-user.target
