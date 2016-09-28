@@ -1,7 +1,9 @@
 from weatherstation.bme280 import BME280
 from weatherstation.si1145 import SI1145
 from weatherstation.weatherunderground import PWS
+
 from weatherstation.led import LEDController
+from weatherstation.relay import RelayController
 
 import weatherstation.web as web
 
@@ -20,6 +22,7 @@ class Daemon(Thread):
     running = True
 
     leds = None
+    relays = None
 
     def __init__(self, id, password, display_units='imperial', busnum=2, environ_update_interval=300):
         super().__init__()
@@ -65,6 +68,12 @@ class Daemon(Thread):
     def _idle(self):
         time.sleep(self._idle_interval)
 
+    def _relay_update(self):
+        #tempf = self.pws.tempf
+        #if tempf and tempf >= 70 and not self.relays.relay_context['k1']['state'] == True:
+        #    self.relays.set('k1', 'on')
+        pass
+
     def _environ_update(self):
         self.pws.tempc = self.atm_sensor.read_temperature()
         self.pws.barom_kPa = self.atm_sensor.read_pressure() / 1000.0
@@ -87,6 +96,7 @@ class Daemon(Thread):
         self.last_environ_update = time.time()
 
     def _update(self):
+        self._relay_update()
         self._check_network()
 
         if not self.network_up:
@@ -137,6 +147,7 @@ if __name__ == '__main__':
     config = init_config()
 
     leds = LEDController(config)
+    relays = RelayController(config)
 
     pws_daemon = Daemon(
         config.get('pws', 'id'),
@@ -145,9 +156,11 @@ if __name__ == '__main__':
     )
 
     pws_daemon.leds = leds
+    pws_daemon.relays = relays
 
     try:
         leds.start()
+        relays.start()
         pws_daemon.start()
 
         web.app.run(host=config.get('web', 'listen_address'),
