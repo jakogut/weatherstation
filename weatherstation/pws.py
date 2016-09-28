@@ -24,7 +24,7 @@ class Daemon(Thread):
     leds = None
     relays = None
 
-    def __init__(self, id, password, display_units='imperial', busnum=2, environ_update_interval=300):
+    def __init__(self, id, password, display_units='imperial', busnum=2, remote_update_interval=300):
         super().__init__()
 
         self.logger = logging.getLogger()
@@ -33,12 +33,12 @@ class Daemon(Thread):
         self.password = password
         self.display_units = display_units
 
-        self._environ_update_interval = environ_update_interval
+        self._remote_update_interval = remote_update_interval
+        self.last_remote_update = None
 
         self.network_up = True
         self.ping_interval = 5
-
-        self.last_environ_update = None
+        self.last_ping = None
 
         self.atm_sensor = BME280(busnum=busnum)
         self.uv_sensor = SI1145(busnum=busnum)
@@ -74,13 +74,15 @@ class Daemon(Thread):
         #    self.relays.set('k1', 'on')
         pass
 
-    def _environ_update(self):
+    def _environ_update(self, update_remote=True):
         self.pws.tempc = self.atm_sensor.read_temperature()
         self.pws.barom_kPa = self.atm_sensor.read_pressure() / 1000.0
         self.pws.humidity_pct = self.atm_sensor.read_humidity()
         self.pws.uv = self.uv_sensor.readUV() / 100.00
 
-        self.pws.upload_outdoor()
+        if update_remote:
+            self.pws.upload_outdoor()
+            self.last_remote_update = time.time()
 
         if self.display_units == 'imperial':
             web.env_data['temp'] = '{:.2f} deg F'.format(self.pws.tempf)
@@ -93,18 +95,20 @@ class Daemon(Thread):
             web.env_data['humd'] = '{:.2f}%'.format(self.pws.humidity_pct)
             web.env_data['uv'] = '{:.2f}'.format(self.pws.uv)
 
-        self.last_environ_update = time.time()
-
     def _update(self):
         self._relay_update()
-        self._check_network()
 
-        if not self.network_up:
-            return
+        if self.last_ping is None \
+        or time.time() > self.last_ping + self.ping_interval:
+            self._check_network()
 
-        if self.last_environ_update is None \
-        or time.time() > self.last_environ_update + self._environ_update_interval:
-            self._environ_update()
+        remote_update = False
+        if self.network_up is True \
+        and (self.last_remote_update is None \
+        or time.time() > self.last_remote_update + self._remote_update_interval):
+            remote_update = True
+
+        self._environ_update(remote_update)
 
     def run(self):
         while self.running:
