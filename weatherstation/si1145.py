@@ -144,14 +144,16 @@ SI1145_REG_CHIPSTAT = 0x30
 
 SI1145_ADDR = 0x60
 
-class SI1145():
+class DeviceNotFoundError(Exception):
+    pass
 
-	def __init__(self):
-		self.i2c = Adafruit_I2C(SI1145_ADDR)
+class SI1145():
+	def __init__(self, **kwargs):
+		self.i2c = Adafruit_I2C(SI1145_ADDR, **kwargs)
 		
 		id = self.read8(SI1145_REG_PARTID)
 		if (id != 0x45):
-			 return false # look for SI1145
+			 raise DeviceNotFoundError("Unable to connect to UV sensor") # look for SI1145
 		
 		self.reset()
 		
