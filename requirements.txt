@@ -1,6 +1,6 @@
 Adafruit-BBIO==0.0.30
 Flask==0.11.1
-Jinja2==2.8
+Jinja2==2.11.3
 MarkupSafe==0.23
 Pint==0.7.2
 Werkzeug==0.11.11
